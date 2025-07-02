@@ -69,6 +69,6 @@ jobs:
         run: |
           if [[ -z $SEMVER_TAG ]]; then echo "No semver tag"; exit 1; fi
           if [[ -z $TAG_SUFFIX ]]; then echo "No tag suffix"; exit 1; fi
-          docker build -t "$ARTIFACT_REGISTRY"/"$IMAGE_NAME":"$GITHUB_SHA"
+          docker build . -t "$ARTIFACT_REGISTRY"/"$IMAGE_NAME":"$GITHUB_SHA"
           docker tag "$ARTIFACT_REGISTRY"/"$IMAGE_NAME":"$GITHUB_SHA" "$ARTIFACT_REGISTRY"/"$IMAGE_NAME":"$SEMVER_TAG"-"$TAG_SUFFIX"
           docker push -a "$ARTIFACT_REGISTRY"/"$IMAGE_NAME"
