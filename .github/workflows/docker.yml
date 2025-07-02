@@ -1,0 +1,74 @@
+name: Build and publish image
+
+on:
+  repository_dispatch:
+    types: [trigger-cd]
+
+env:
+  IMAGE_NAME: tlv-ci-cd-example
+  REGISTRY: ghcr.io
+  ARTIFACT_REGISTRY: ghcr.io/mcankudis
+
+jobs:
+  get-version-tag:
+    name: Create version image tag from semver and suffix from branch
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.get_semver_tag.outputs.semver_tag }}
+      suffix: ${{ steps.create_image_tag_suffix.outputs.image_tag_suffix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get semver tag
+        id: get_semver_tag
+        shell: bash
+        env:
+          VERSION_INPUT: ${{ github.event.client_payload.version }}
+        run: |
+          if [[ -z $VERSION_INPUT ]]; then
+            echo "semver_tag=$(cat package.json | jq -r '.version')" >> "$GITHUB_OUTPUT"
+          else
+            echo "semver_tag=$VERSION_INPUT" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create image tag suffix
+        id: create_image_tag_suffix
+        shell: bash
+        env:
+          ACTION: ${{ github.event.client_payload.action }}
+          branch: ${{ github.event.branch }}
+        run: |
+          if [[ $branch == "release" ]]; then \
+            suffix="release.$(date +'%s')"; \
+          else \
+            suffix="preview.$(date +'%s')"; \
+          fi
+          echo "image_tag_suffix=$suffix" >> "$GITHUB_OUTPUT"
+
+  build-and-publish-docker-image:
+    name: Build and publish Docker image
+    runs-on: ubuntu-latest
+    needs: get-version-tag
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        shell: bash
+        env:
+          SEMVER_TAG: ${{ needs.get-version-tag.outputs.tag }}
+          TAG_SUFFIX: ${{ needs.get-version-tag.outputs.suffix}}
+        run: |
+          if [[ -z $SEMVER_TAG ]]; then echo "No semver tag"; exit 1; fi
+          if [[ -z $TAG_SUFFIX ]]; then echo "No tag suffix"; exit 1; fi
+          docker build -t "$ARTIFACT_REGISTRY"/"$IMAGE_NAME":"$GITHUB_SHA"
+          docker tag "$ARTIFACT_REGISTRY"/"$IMAGE_NAME":"$GITHUB_SHA" "$ARTIFACT_REGISTRY"/"$IMAGE_NAME":"$SEMVER_TAG"-"$TAG_SUFFIX"
+          docker push -a "$ARTIFACT_REGISTRY"/"$IMAGE_NAME"
