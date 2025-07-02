@@ -1,0 +1,15 @@
+{
+    "git": {
+      "commitMessage": "chore(release): ${version} [no ci]",
+      "pushArgs": [
+        "--follow-tags",
+        "--no-verify"
+      ]
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": "conventionalcommits",
+        "infile": "CHANGELOG.md"
+      }
+    }
+  }
