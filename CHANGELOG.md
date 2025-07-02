@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.2](https://github.com/mcankudis/cicd-example/compare/0.2.1...0.2.2) (2025-07-02)
+
+### Bug Fixes
+
+* run start:prod in docker ([1908b50](https://github.com/mcankudis/cicd-example/commit/1908b50a01da65e3d8d10ae8e5e2a0e421c66198))
+
 ## [0.2.1](https://github.com/mcankudis/cicd-example/compare/0.2.0...0.2.1) (2025-07-02)
 
 ### Bug Fixes
