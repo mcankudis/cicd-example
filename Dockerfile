@@ -19,4 +19,4 @@ COPY package-lock.json .
 RUN npm ci --omit=dev
 
 EXPOSE 8080
-CMD [ "npm", "run", "start" ]
+CMD [ "npm", "run", "start:prod" ]
